@@ -106,18 +106,12 @@ do_server_request(struct server *sv, int connfd)
 	/* read file, 
 	 * fills data->file_buf with the file contents,
 	 * data->file_size with file size. */
-
-	// lab 5 code here			
+		
 	// in the beginning, only have the file_name
-
 	// if (data->file_size <= sv->max_cache_size) { // file is small enough to cache
 	// file is small enough to cache
-	// pthread_mutex_lock(&(cPtr->cacheMutex1));	
-
-
-	// cPtr->dataSend = (struct file_data*) malloc(sizeof(struct file_data));
-
 	// *NOTE: if cache_lookup() returns true, then data has been linked with the file in cache
+	
 	pthread_mutex_lock(&(cPtr->cacheMutex1));	
 	bool inCache = cache_lookup(data);
 
@@ -136,7 +130,6 @@ do_server_request(struct server *sv, int connfd)
 			// file is small enough to cache
 			if (!cache_lookup(data)){
 				cache_insert(data);
-				// cache_lookup(data);
 			}
 		}
 
@@ -148,9 +141,8 @@ do_server_request(struct server *sv, int connfd)
 		// filling in the request (rq) data
 	}
 	/* send file to client */
-
-	// pthread_mutex_unlock(&(cPtr->cacheMutex1));	
 	// broken pipe may be caused by not having a deep copy of the data
+	
 	pthread_mutex_unlock(&(cPtr->cacheMutex1));	
 	request_sendfile(rq);
 out:
@@ -162,16 +154,12 @@ out:
 // Returns the amount of bytes evicted
 int cache_evict(int evictSize)
 {
-	// printf("in cache_evict\n");
     int size = 0;
 
     while (cPtr->maxSize - cPtr->currSize + size < evictSize){ // (amount of free space) < evictSize
 
 		// tptr MAY NOT BE POINTING TO THE CORRECT CacheNode IF THERE ARE COLLISIONS
 		// pthread_mutex_lock(&(cPtr->cacheMutex2));
-		// printf("currSize: %d, evictSize: %d, size: %d, maxSize: %d\n", cPtr->currSize, evictSize, size, cPtr->maxSize);
-		// printNodes();
-		// printf("tail: %p, head: %p\n", cPtr->tail, cPtr->head);	
 		int index = hash(cPtr->tail->file_name);
 		
         // removing file from cache
@@ -210,9 +198,6 @@ int cache_evict(int evictSize)
             prevPtr = tptr;
             tptr = tptr->next;
         }
-		// pthread_mutex_unlock(&(cPtr->cacheMutex2));	
-
-		// cPtr->currSize -= sizeRemoved;
 		tptr = NULL;
 		prevPtr = NULL;
     }
@@ -256,17 +241,12 @@ void enqueue(struct CacheNode* cnPtr)
 		cPtr->tail = nodePtr;
 
 		// initalizing the node object
-		// nodePtr->file_name = cnPtr->data->file_name;
-		// memcpy(nodePtr->file_name, cnPtr->data->file_name);
-		// nodePtr->size = cnPtr->data->file_size;
 		nodePtr->prev = NULL;
 		nodePtr->next = NULL;
 	}
 	else {
 		// if the queue is NOT empty
 		// initializing Node
-		// nodePtr->file_name = cnPtr->data->file_name;
-
 		// attaching new Node at the head of the queue
 		cPtr->head->next = nodePtr;
 		nodePtr->prev = cPtr->head;
@@ -335,24 +315,16 @@ void removeAnyNode(struct CacheNode* cnPtr)
 // If there is no more room, will evict files 
 void cache_insert(struct file_data *data)
 {
-	// printf("cache_insert\n");
     if (cPtr->currSize + data->file_size > cPtr->maxSize){
         // need to evict
-		// printf("currSize: %d, file_size: %d, maxSize: %d\n", cPtr->currSize, data->file_size, cPtr->maxSize);
-		// pthread_mutex_lock(&(cPtr->cacheMutex2));	
-		int amountEvicted = cache_evict(data->file_size);
-		// pthread_mutex_unlock(&(cPtr->cacheMutex2));	
+
+	int amountEvicted = cache_evict(data->file_size);
         cPtr->currSize -= amountEvicted;
     }
-	// pthread_mutex_lock(&(cPtr->cacheMutex2));	
-	// printf("currSize: %d, file_size: %d\n", cPtr->currSize, data->file_size);
     cPtr->currSize += data->file_size;
 	
 	// inserting new CacheNode into cache (hashMap)
-	// printf("here a1\n");
 	int index = hash(data->file_name);
-	// printf("here a2\n");
-	// pthread_mutex_lock(&(cPtr->cacheMutex2));	
 	struct CacheNode *tptr = cPtr->cacheArray[index];
 
 	if (tptr == NULL){
@@ -375,20 +347,13 @@ void cache_insert(struct file_data *data)
 		prevPtr = NULL;
     }
 
-	// printf("here a3\n");
 	// at this point, tptr is pointing to the newly created CacheNode
     tptr->data = file_data_init();
-    // tptr->data = data; // insert data into cache (hashTable)
+
 	memcpy(tptr->data, data, sizeof(struct file_data));
 	tptr->next = NULL;
 	tptr->queue = NULL;
-
-	// printf("here a4\n");
     enqueue(tptr); // placing this new file as most recently used
-	// pthread_mutex_unlock(&(cPtr->cacheMutex2));	
-	// printf("here a5\n");
-
-	// pthread_mutex_unlock(&(cPtr->cacheMutex2));	
     tptr = NULL;
 }
 
@@ -397,13 +362,11 @@ void cache_insert(struct file_data *data)
 // Returns false otherwise
 bool cache_lookup(struct file_data *data)
 {
-	// printf("in CACHE_LOOKUP\n");
 	struct CacheNode *tptr = cPtr->cacheArray[hash(data->file_name)];
 
 	while (tptr != NULL){
 
 		if (strcmp(tptr->data->file_name, data->file_name) == 0){
-			// printf("cache hit\n");
 			// cache HIT
 			memcpy(data, tptr->data, sizeof(struct file_data));
 
