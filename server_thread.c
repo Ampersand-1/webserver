@@ -159,7 +159,6 @@ int cache_evict(int evictSize)
     while (cPtr->maxSize - cPtr->currSize + size < evictSize){ // (amount of free space) < evictSize
 
 		// tptr MAY NOT BE POINTING TO THE CORRECT CacheNode IF THERE ARE COLLISIONS
-		// pthread_mutex_lock(&(cPtr->cacheMutex2));
 		int index = hash(cPtr->tail->file_name);
 		
         // removing file from cache
@@ -227,8 +226,6 @@ void printNodes(void){
 // also links the Node to the given CacheNode
 void enqueue(struct CacheNode* cnPtr)
 {
-	// printf("in enqueue\n");
-	// printNodes();
 	struct Node *nodePtr = (struct Node*) malloc(sizeof(struct Node));
 	nodePtr->file_name = (char*) malloc(sizeof(char));
 
@@ -527,7 +524,6 @@ server_exit(struct server *sv)
 	}
 
 	/* make sure to free any allocated resources */
-	// printf("in server_exit\n");
 	pthread_mutex_destroy(&(cPtr->cacheMutex1));
 	pthread_mutex_destroy(&(cPtr->cacheMutex2));
 	pthread_mutex_destroy(&(cPtr->cacheMutex3));
